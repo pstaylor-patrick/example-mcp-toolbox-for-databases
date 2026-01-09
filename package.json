@@ -18,7 +18,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx db/seed/index.ts",
     "db:studio": "drizzle-kit studio",
-    "db:reset": "pnpm db:destroy && pnpm db:up && sleep 2 && pnpm db:migrate && pnpm db:seed"
+    "db:reset": "pnpm db:destroy && pnpm db:up && sleep 2 && pnpm db:migrate && pnpm db:seed",
+    "mcp:serve": "npx @toolbox-sdk/server --tools-file tools.yaml --address 0.0.0.0 --port 5050"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",
