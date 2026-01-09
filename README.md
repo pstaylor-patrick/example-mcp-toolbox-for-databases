@@ -1,5 +1,31 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Database Setup
+
+### Prerequisites
+
+- Docker installed and running
+
+### Environment
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+### Commands
+
+```bash
+pnpm db:up        # Start PostgreSQL container
+pnpm db:migrate   # Run database migrations
+pnpm db:seed      # Seed the database
+pnpm db:studio    # Open Drizzle Studio (database GUI)
+pnpm db:reset     # Full reset: destroy, up, migrate, seed
+pnpm db:down      # Stop the container
+pnpm db:destroy   # Stop container and remove data
+```
+
 ## Getting Started
 
 First, run the development server:
