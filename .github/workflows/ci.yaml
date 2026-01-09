@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: [main, feat-jibjab]
   pull_request:
     branches: [main]
 
