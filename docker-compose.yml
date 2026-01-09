@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: jibjab-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jibjab
+      POSTGRES_PASSWORD: jibjab_dev_password
+      POSTGRES_DB: jibjab_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - jibjab_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jibjab"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  jibjab_postgres_data:
