@@ -1,0 +1,112 @@
+sources:
+  jibjab-postgres:
+    kind: postgres
+    host: localhost
+    port: "5432"
+    database: jibjab_dev
+    user: postgres
+    password: postgres
+
+tools:
+  list_jibjabs:
+    kind: postgres-sql
+    source: jibjab-postgres
+    description: List all JibJab video shares with pagination
+    parameters:
+      - name: limit
+        type: integer
+        description: Max records to return (default 50)
+        default: 50
+      - name: offset
+        type: integer
+        description: Records to skip for pagination
+        default: 0
+    statement: |
+      SELECT id, type, shared_in->>'platform' as platform,
+             shared_in->>'shared_by' as shared_by,
+             video->>'template_slug' as template_slug, created_at
+      FROM jibjabs ORDER BY created_at DESC
+      LIMIT LEAST($1::int, 100) OFFSET $2::int
+
+  search_by_platform:
+    kind: postgres-sql
+    source: jibjab-postgres
+    description: Search JibJabs by platform (slack, teams, email, etc.)
+    parameters:
+      - name: platform
+        type: string
+        description: Platform name to filter by
+    statement: |
+      SELECT id, shared_in->>'platform' as platform,
+             shared_in->>'shared_by' as shared_by,
+             shared_in->>'message_text' as message_text,
+             video->>'template_slug' as template_slug, created_at
+      FROM jibjabs WHERE shared_in->>'platform' ILIKE $1
+      ORDER BY created_at DESC LIMIT 50
+
+  search_by_shared_by:
+    kind: postgres-sql
+    source: jibjab-postgres
+    description: Search JibJabs by who shared them (partial match)
+    parameters:
+      - name: shared_by
+        type: string
+        description: Name of person who shared
+    statement: |
+      SELECT id, shared_in->>'platform' as platform,
+             shared_in->>'shared_by' as shared_by,
+             shared_in->>'message_text' as message_text,
+             video->>'template_slug' as template_slug, created_at
+      FROM jibjabs WHERE shared_in->>'shared_by' ILIKE '%' || $1 || '%'
+      ORDER BY created_at DESC LIMIT 50
+
+  get_jibjab_by_id:
+    kind: postgres-sql
+    source: jibjab-postgres
+    description: Get full details for a specific JibJab by UUID
+    parameters:
+      - name: id
+        type: string
+        description: The UUID of the JibJab record
+    statement: |
+      SELECT id, type, shared_in, video, notes, created_at, updated_at
+      FROM jibjabs WHERE id = $1::uuid
+
+  get_jibjab_stats:
+    kind: postgres-sql
+    source: jibjab-postgres
+    description: Get summary statistics about JibJab shares
+    statement: |
+      SELECT COUNT(*) as total_shares,
+             COUNT(DISTINCT shared_in->>'platform') as unique_platforms,
+             COUNT(DISTINCT shared_in->>'shared_by') as unique_sharers,
+             MIN(created_at) as first_share, MAX(created_at) as last_share
+      FROM jibjabs
+
+  search_jibjabs:
+    kind: postgres-sql
+    source: jibjab-postgres
+    description: Full-text search across JibJab records
+    parameters:
+      - name: query
+        type: string
+        description: Search query (matches message, shared_by, template)
+    statement: |
+      SELECT id, shared_in->>'platform' as platform,
+             shared_in->>'shared_by' as shared_by,
+             shared_in->>'message_text' as message_text,
+             video->>'template_slug' as template_slug, created_at
+      FROM jibjabs
+      WHERE shared_in->>'message_text' ILIKE '%' || $1 || '%'
+         OR shared_in->>'shared_by' ILIKE '%' || $1 || '%'
+         OR video->>'template_slug' ILIKE '%' || $1 || '%'
+      ORDER BY created_at DESC LIMIT 50
+
+toolsets:
+  jibjab_readonly:
+    - list_jibjabs
+    - search_by_platform
+    - search_by_shared_by
+    - get_jibjab_by_id
+    - get_jibjab_stats
+    - search_jibjabs
